@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+   <head>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+      <link rel="icon" type="image/png" href="img/pl_favicon.ico">
+      <title>FPL FB Dash</title>
+      <!--     Fonts and icons     -->
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato">
+      <!-- JQuery -->
+      <script src="js/jquery.js"></script>
+      <!-- VUE -->
+      <script src="https://unpkg.com/vue@next"></script>
+      <!-- Font Awesome -->
+      <link href="fontawesome/css/all.css" rel="stylesheet">
+      <!-- Datatables -->
+      <link rel="stylesheet" type="text/css" href="DataTables/datatables.min.css"/>
+      <script type="text/javascript" src="DataTables/datatables.min.js"></script>
+      <!-- Utilities -->
+      <script src="js/utilities.js"></script>
+   </head>
+   <style type="text/css">
+      body {
+         font-family: 'Lato';
+         background-color: #f8f9fa;
+      }
+      td {
+         text-align: center;
+      }
+      a {
+         color: #37003C;
+      }
+      table {
+         background-color: white;
+         border-collapse:separate; 
+         border-spacing: 0 1em;
+      }
+      .navbar_container {
+         background-image: linear-gradient(to right, white 0%, white 4%, #37003C 4%, #37003C 50%, #4A69B0 85%, white 92%);
+         display: flex;
+      }
+      .main_container {
+         margin-left: 8px;
+         margin-right: 8px;
+      }
+      .main_title {
+         background-image: linear-gradient(310deg, #4A69B0 0%, #37003C 50%, #4A69B0 100%);
+         border-radius: 0.5rem;
+         color: white;
+         text-align: center;
+      }
+      .active_row {
+         background-color: #c4cfe6 !important;
+      }
+   </style>
+   <body id="vue_app" >
+
+      <!-- Branded Navbar -->
+      <div class="navbar_container" style="height: 60px">
+         <div style="flex: 4%;"><img src="img/pl_logo.jpeg" style="height: 60px; width: 60px;"></div>
+         <div style="flex: 92%; margin-left: 8pt;"><h3 style="color: white; font-size: 2em; margin: 0.3em;">{{title}}</h3></div>
+         <div style="flex: 4%;"><img src="img/fb_logo.png" style="height: 60px; width: 60px;"></div>
+      </div>
+
+      <div v-if="loaded">
+         
+      </div>
+      <!-- Table of results -->
+      <div v-else style="display: flex;">
+         <div class="main_container" style="flex: 50%;">
+            <div class="main_title" style="height: 32px"> <h2>Standings</h2> </div>
+            <table id="standings" style="width: 100%;">
+               <thead style="font-size: 1.2em;">
+                  <th>Rank</th>
+                  <th>Team</th>
+                  <th>GW</th>
+                  <th>Pts</th>
+                  <th>Captain</th>
+                  <th>Played</th>
+               </thead>
+               <tbody>
+                  <tr v-for="(team, index) in standings" v-on:click="select_row(team.entry)" :class="{ active_row : selected_id == team.entry || (runs == 0 && index == 0) }">
+                     <td data-order="{{team.rank}}">
+                        {{team.rank}} ({{team.rank - team.last_rank}})  
+                        <span v-if="team.rank > team.last_rank" style="color: green">
+                           <i class="fas fa-arrow-alt-circle-up"></i>
+                        </span>
+                        <span v-else-if="team.rank > team.last_rank">
+                           <i class="fas fa-equals"></i>
+                        </span>
+                        <span v-else="team.rank > team.last_rank" style="color: red">
+                           <i class="fas fa-arrow-alt-circle-down"></i>
+                        </span>
+                     </td>
+                     <td>
+                        <a :href="'https://fantasy.premierleague.com/entry/' + team.entry + '/event/1'" target="_blank"><b>{{team.entry_name}}</b></a>
+                        <br>
+                        <i>{{team.player_name}}</i>
+                     </td>
+                     <td>{{team.event_total}}</td>
+                     <td>{{team.total}}</td>
+                     <td>{{static_data.players[team_details[team.entry].picks.filter(x => x.is_captain)[0].element].name}}</td>
+                     <td>{{team_details[team.entry].picks.filter(x => x.position <= 11).map(x => static_data.players[x.element].minutes).filter(x => x > 0).length}}</td>
+                  </tr>
+               </tbody>
+            </table>
+         </div>
+         <div class="main_container" style="flex: 25%;">
+            <div class="main_title" style="height: 32px">
+               <h2>Captain Picks</h2>
+            </div>
+            <table id="captains" style="width: 100%;">
+               <thead style="font-size: 1.2em;">
+                  <th>Player</th>
+                  <th>Selected</th>
+                  <th>Pts</th>
+               </thead>
+               <tbody>
+                  <tr v-for="(freq, id) in captains_agg">
+                     <td>
+                        <div>
+                           <img style=" height: 48px; margin-right: 8px; vertical-align:middle;" 
+                              :src="'https://resources.premierleague.com/premierleague/photos/players/110x140/p' + static_data.players[id].code + '.png'">
+                           </img>
+                           <span>{{static_data.players[id].name}}</span>
+                        </div>
+                     </td>
+                     <td>{{freq}}</td>
+                     <td>{{static_data.players[id].points}}</td>
+                  </tr>
+               </tbody>
+            </table>
+               <div class="main_title" style="height: 32px">
+                  <h2>Fixtures</h2>
+               </div>
+               <div style="background: white;">
+                  <div v-for="s in schedule" style="width: 100%; text-align: left; padding: 8px;">
+                     <span style="margin-left: 16px;"><b>{{s.team_h_score}}</b></span>
+                     <img style=" height: 24px; margin-right: 8px; margin-left: 8px; vertical-align:middle;" :src="'https://resources.premierleague.com/premierleague/badges/70/t' + static_data.teams[s.team_h].code + '.png'">
+                     </img>
+                     <span>-</span>
+                     <img style=" height: 24px; margin-right: 8px; margin-left: 8px;vertical-align:middle;" :src="'https://resources.premierleague.com/premierleague/badges/70/t' + static_data.teams[s.team_a].code + '.png'">
+                     </img>
+                     <span><b>{{s.team_a_score}}</b></span>
+                     <span v-if="s.finished" style="margin-left: 16px;"><i>Finished</i></span>
+                     <span v-else-if="s.started" style="margin-left: 16px;"><i>Live ({{s.minutes}})</i></span>
+                     <span v-else style="margin-left: 16px;"><i>{{s.kickoff_time.replace('T', ' ').replace(':00Z', '')}}</i></span>
+                  </div>
+               </div>
+         </div>
+         <div class="main_container" style="flex: 25%;">
+            <div class="main_title" style="height: 32px">
+               <h2>Selected Team</h2>
+            </div>
+            <table id="team_tbl" style="width: 100%;">
+               <thead style="font-size: 1.2em;">
+                  <th>Player</th>
+                  <th>Fixture</th>
+                  <th>Min</th>
+                  <th>Pts</th>
+               </thead>
+               <tbody>
+                  <tr v-for="(p, index) in lineup">
+                     <td data-order="index">
+                        <div>
+                           <img style=" height: 48px; margin-right: 8px; vertical-align:middle;" 
+                              :src="'https://resources.premierleague.com/premierleague/photos/players/110x140/p' + static_data.players[p.element].code + '.png'">
+                           </img>
+                           <span v-if="p.is_captain"><b>{{static_data.players[p.element].name}} (C)</b></span>
+                           <span v-else>{{static_data.players[p.element].name}}</span>
+                        </div>
+                     </td>
+                     <td>
+                        <img style=" height: 32px; margin-right: 8px; margin-left: 8px; vertical-align:middle;" :src="'https://resources.premierleague.com/premierleague/badges/70/t' + static_data.teams[schedule.map(x => [x.team_h, x.team_a]).filter(x => x[0] == static_data.players[p.element].team || x[1] == static_data.players[p.element].team)[0].join('|').replace(static_data.players[p.element].team, '').replace('|', '')].code + '.png'">
+                        </img>
+                        <span v-if="static_data.players[p.element].team in schedule.map(x => x.team_h)"><b>H</b></span>
+                        <span v-else="static_data.players[p.element].team in schedule.map(x => x.team_a)"><b>a</b></span>
+                     </td>
+                     <td>{{static_data.players[p.element].minutes}}</td>
+                     <td>{{static_data.players[p.element].points}}</td>
+                  </tr>
+               </tbody>
+            </table>
+         </div>
+      </div>
+
+      
+   </body>
+
+   <script src="js/pull_all_static_fpl_data.js"></script>
+
+</html>
