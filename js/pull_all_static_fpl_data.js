@@ -37,6 +37,13 @@ function update_live_points(standings, picks, live){
 	standings.sort(function(a, b){return (b.total-b.event_total+b.live_points) - (a.total-a.event_total+a.live_points)});
 	return standings;
 }
+function DT_initialize(id, params, else_fun) { 
+	if ( ! $.fn.DataTable.isDataTable(id) ) {
+	  $(id).dataTable(params);
+	  return true;
+	}
+	return false;
+}
 
 // Pull Static Data
 async function static_details(){
@@ -114,14 +121,6 @@ async function generate_page(){
 			return { 
 				to_load: true,
 				title: 'Loading', 
-				standings: null, 
-				team_details: {},
-				static_data: {},
-				captains_agg: {},
-				ownership_agg: {},
-				lineup: {},
-				schedule: [],
-				picks: {},
 				gameweek: 1,
 				selected_id: 1, 
 				runs: 0 
@@ -175,61 +174,63 @@ async function generate_page(){
 				this.live = await live_data(gameweek);
 				let updated_standings = update_live_points(this.standings, this.picks, live);
 				this.standings = updated_standings;
-				this.$forceUpdate();
 				$('#standings').DataTable().order( [[ 3, 'desc' ]] ).draw( false );
 			}, 60000)
+		},
+		async updated() { 
+			console.log('updating')
+			let to_init = DT_initialize('#standings', {
+				'pageLength': 15,
+				'dom': 'tp',
+				'order': [[ 3, "desc" ]],
+				"columnDefs": [ 
+					{ "orderable": false, "targets": [0] }
+				]
+			});
+			if (!to_init) {
+				$('#standings').DataTable().order( [[ 3, 'desc' ]] ).draw( false );
+			}
+			DT_initialize('#captains', {
+				'pageLength': 5,
+				'dom': 'tp',
+				'order': [[ 1, "desc" ]],
+				"columnDefs": [
+					{ "width": "50%", "targets": 0 }
+				]	
+			});
+			DT_initialize('#ownership', {
+				'pageLength': 5,
+				'dom': 'tp',
+				'order': [[ 1, "desc" ]],
+				"columnDefs": [
+		    		{ "width": "50%", "targets": 0 }
+		  		]	
+			});
+			DT_initialize('#team_tbl', {
+				'pageLength': 11,
+				'dom': 'tp',
+				"bSort" : false,
+				"columnDefs": [
+		    		{ "width": "50%", "targets": 0 }
+		  		],
+				"language": {
+					"paginate": {
+						"previous": "Starting 11",
+						"next": "Bench"
+					}
+		  		}
+			});
 		},
 		methods: { 
 			select_row: function (id) {
 				this.runs = this.runs+1;
 				this.selected_id = id;
-				this.lineup = picks[id];
+				this.lineup = this.picks[id];
 			}
 		}
 	});
 	await app.mount('#vue_app');
-	
-	// Create DataTables
-	$('#standings').DataTable({
-		'pageLength': 15,
-		'dom': 'tp',
-		'order': [[ 3, "desc" ]],
-		"columnDefs": [ 
-			{ "orderable": false, "targets": [0] }
-		]
-	});
-	$('#captains').DataTable({
-		'pageLength': 5,
-		'dom': 'tp',
-		'order': [[ 1, "desc" ]],
-		"columnDefs": [
-    		{ "width": "50%", "targets": 0 }
-  		]	
-	});
-	$('#ownership').DataTable({
-		'pageLength': 5,
-		'dom': 'tp',
-		'order': [[ 1, "desc" ]],
-		"columnDefs": [
-    		{ "width": "50%", "targets": 0 }
-  		]	
-	});
-	$('#team_tbl').DataTable({
-		'pageLength': 11,
-		'dom': 'tp',
-		"bSort" : false,
-		"columnDefs": [
-    		{ "width": "50%", "targets": 0 }
-  		],
-		"language": {
-			"paginate": {
-				"previous": "Starting 11",
-				"next": "Bench"
-			}
-  		}
-	});
-
 
 };
 
-generate_page();
+generate_page()

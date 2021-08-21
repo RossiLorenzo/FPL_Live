@@ -16,46 +16,11 @@
       <!-- Datatables -->
       <link rel="stylesheet" type="text/css" href="DataTables/datatables.min.css"/>
       <script type="text/javascript" src="DataTables/datatables.min.js"></script>
+      <!-- CSS -->
+      <link rel="stylesheet" type="text/css" href="css/index.css"/>
    </head>
    <style type="text/css">
-      body {
-         font-family: 'Lato';
-         background-color: #f8f9fa;
-      }
-      td {
-         text-align: left;
-      }
-      th {
-         text-align: left;
-      }
-      a {
-         color: #37003C;
-      }
-      span > a.paginate_button { 
-         display: none !important;
-      }
-      table {
-         background-color: white;
-         border-collapse:separate; 
-         border-spacing: 0 1em;
-      }
-      .navbar_container {
-         background-image: linear-gradient(to right, white 0%, white 4%, #37003C 4%, #37003C 50%, #4A69B0 85%, white 92%);
-         display: flex;
-      }
-      .main_container {
-         margin-left: 8px;
-         margin-right: 8px;
-      }
-      .main_title {
-         background-image: linear-gradient(310deg, #4A69B0 0%, #37003C 50%, #4A69B0 100%);
-         border-radius: 0.5rem;
-         color: white;
-         text-align: center;
-      }
-      .active_row {
-         background-color: #c4cfe6 !important;
-      }
+
    </style>
    <body id="vue_app" >
 
@@ -67,7 +32,9 @@
       </div>
 
       <div v-if="to_load">
-         <img src="img/loading.gif">
+         <div class="loadingio-spinner-eclipse-fqk8jqitbsb"><div class="ldio-4szc161dk5">
+            <div></div>
+            </div></div>
       </div>
       <div v-else style="display: flex;">
          <div class="main_container" style="flex: 47%;">
