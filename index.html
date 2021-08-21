@@ -84,9 +84,9 @@
                </thead>
                <tbody>
                   <tr v-for="(team, index) in standings" v-on:click="select_row(team.entry)" :class="{ active_row : selected_id == team.entry || (runs == 0 && index == 0) }">
-                     <td data-order="{{team.rank}}">
+                     <td>
                         {{index+1}} ({{team.last_rank}})  
-                        <span v-if="(index+1) > team.last_rank" style="color: green">
+                        <span v-if="(index+1) < team.last_rank" style="color: green">
                            <i class="fas fa-arrow-alt-circle-up"></i>
                         </span>
                         <span v-else-if="(index+1) == team.last_rank">
@@ -101,13 +101,11 @@
                         <br>
                         <i>{{team.player_name}}</i>
                      </td>
-                     <td>{{team_details[team.entry].picks.filter(x => x.position <= 11).map(x => live.filter(y => y.id == x.element).map(y => y.stats.total_points * x.multiplier)).flat().reduce((x,y) => x+y)}}</td>
-                     <td>{{team.total-team.event_total+team_details[team.entry].picks.filter(x => x.position <= 11).map(x => live.filter(y => y.id == x.element).map(y => y.stats.total_points * x.multiplier)).flat().reduce((x,y) => x+y)}}</td>
-                     <td>{{static_data.players[team_details[team.entry].picks.filter(x => x.is_captain)[0].element].name}}</td>
-                     <td>{{team_details[team.entry].picks.filter(x => x.position <= 11).map(x => live.filter(y => y.id == x.element).map(y => y.stats.minutes)).flat().filter(x => x > 0).length}}</td>
-
+                     <td>{{team.live_points}}</td>
+                     <td>{{team.total-team.event_total+team.live_points}}</td>
+                     <td>{{static_data.players[picks[team.entry].filter(x => x.is_captain)[0].element].name}}</td>
+                     <td>{{picks[team.entry].filter(x => x.position <= 11).map(x => live.filter(y => y.id == x.element).map(y => y.stats.minutes)).flat().filter(x => x > 0).length}}</td>
                   </tr>
-                  <!-- .map(x => live.filter(y => y.id == x.element).map(x => x.stats.total_points) -->
                </tbody>
             </table>
          </div>
@@ -131,28 +129,35 @@
                            <span>{{static_data.players[id].name}}</span>
                         </div>
                      </td>
-                     <td>{{freq}}</td>
+                     <td :data-order="freq">{{freq}} ({{Math.round(100*freq/standings.length)}}%)</td>
                      <td>{{live.filter(y => y.id == id)[0].stats.total_points}}</td>
                   </tr>
                </tbody>
             </table>
-               <div class="main_title" style="height: 32px">
-                  <h2>Fixtures</h2>
-               </div>
-               <div style="background: white;">
-                  <div v-for="s in schedule" style="width: 100%; text-align: left; padding: 8px;">
-                     <span style="margin-left: 16px;"><b>{{s.team_h_score}}</b></span>
-                     <img style=" height: 24px; margin-right: 8px; margin-left: 8px; vertical-align:middle;" :src="'https://resources.premierleague.com/premierleague/badges/70/t' + static_data.teams[s.team_h].code + '.png'">
-                     </img>
-                     <span>-</span>
-                     <img style=" height: 24px; margin-right: 8px; margin-left: 8px;vertical-align:middle;" :src="'https://resources.premierleague.com/premierleague/badges/70/t' + static_data.teams[s.team_a].code + '.png'">
-                     </img>
-                     <span><b>{{s.team_a_score}}</b></span>
-                     <span v-if="s.finished" style="margin-left: 16px;"><i>Finished</i></span>
-                     <span v-else-if="s.started" style="margin-left: 16px;"><i>Live ({{s.minutes}})</i></span>
-                     <span v-else style="margin-left: 16px;"><i>{{s.kickoff_time.replace('T', ' ').replace(':00Z', '')}}</i></span>
-                  </div>
-               </div>
+            <div class="main_title" style="height: 32px">
+               <h2>Top Owned Players</h2>
+            </div>
+            <table id="ownership" style="width: 100%;">
+               <thead style="font-size: 1.2em;">
+                  <th>Player</th>
+                  <th>Selected</th>
+                  <th>Pts</th>
+               </thead>
+               <tbody>
+                  <tr v-for="(freq, id) in ownership_agg">
+                     <td>
+                        <div>
+                           <img style=" height: 32px; margin-right: 8px; vertical-align:middle;" 
+                              :src="'https://resources.premierleague.com/premierleague/photos/players/110x140/p' + static_data.players[id].code + '.png'">
+                           </img>
+                           <span>{{static_data.players[id].name}}</span>
+                        </div>
+                     </td>
+                     <td :data-order="freq">{{freq}} ({{Math.round(100*freq/standings.length)}}%)</td>
+                     <td>{{live.filter(y => y.id == id)[0].stats.total_points}}</td>
+                  </tr>
+               </tbody>
+            </table>
          </div>
          <div class="main_container" style="flex: 30%;">
             <div class="main_title" style="height: 32px">
@@ -187,6 +192,23 @@
                   </tr>
                </tbody>
             </table>
+            <div class="main_title" style="height: 32px">
+               <h2>Fixtures</h2>
+            </div>
+            <div style="background: white;">
+               <div v-for="s in schedule" style="width: 100%; text-align: left; padding: 8px;">
+                  <span style="margin-left: 16px;"><b>{{s.team_h_score}}</b></span>
+                  <img style=" height: 24px; margin-right: 8px; margin-left: 8px; vertical-align:middle;" :src="'https://resources.premierleague.com/premierleague/badges/70/t' + static_data.teams[s.team_h].code + '.png'">
+                  </img>
+                  <span>-</span>
+                  <img style=" height: 24px; margin-right: 8px; margin-left: 8px;vertical-align:middle;" :src="'https://resources.premierleague.com/premierleague/badges/70/t' + static_data.teams[s.team_a].code + '.png'">
+                  </img>
+                  <span><b>{{s.team_a_score}}</b></span>
+                  <span v-if="s.finished" style="margin-left: 16px;"><i>Finished</i></span>
+                  <span v-else-if="s.started" style="margin-left: 16px;"><i>Live</i></span>
+                  <span v-else style="margin-left: 16px;"><i>{{s.kickoff_time.replace('T', ' ').replace(':00Z', '')}}</i></span>
+               </div>
+            </div>
          </div>
       </div>
 

@@ -24,6 +24,19 @@ function array_histogram (array) {
   	}
 	return c;
 }
+function update_live_points(standings, picks, live){
+	for (var i = standings.length - 1; i >= 0; i--) {
+		let entry = standings[i].entry;
+		standings[i]['live_points'] = picks[entry]
+			.filter(x => x.position <= 11)
+			.map(x => live.filter(y => y.id == x.element)
+			.map(y => y.stats.total_points * x.multiplier))
+			.flat()
+			.reduce((x,y) => x+y)
+	}
+	standings.sort(function(a, b){return (b.total-b.event_total+b.live_points) - (a.total-a.event_total+a.live_points)});
+	return standings;
+}
 
 // Pull Static Data
 async function static_details(){
@@ -65,7 +78,7 @@ async function league_details(league_id){
 	let next_page = true;
 	let standings = [];
 	let page;
-	while (next_page) {
+	while (next_page && page_number < 5) {
 		page = await async_cors_fetch(`https://fantasy.premierleague.com/api/leagues-classic/${league_id}/standings/?page_standings=${page_number}`);
 		standings.push(page.standings.results);
 		next_page = page.standings.has_next;
@@ -104,17 +117,28 @@ async function generate_page(){
 	let schedule_data = await schedule(gameweek);
 	let live = await live_data(gameweek);
 
-	let captains_agg = {}
-	if (!("detail" in teams_data[Object.keys(teams_data)[0]])) {
-		captains_agg = array_histogram(Object.keys(teams_data).map(x => teams_data[x].picks.filter(x => x.is_captain)[0].element));	
-	}
-
 	let picks = {}
 	if ("picks" in teams_data[Object.keys(teams_data)[0]]) {
 		for (const [key, value] of Object.entries(teams_data)) {
 			picks[key] = value.picks;
 		}
 	}
+	
+
+	let captains_agg = {}
+	if (!("detail" in teams_data[Object.keys(teams_data)[0]])) {
+		captains_agg = array_histogram(Object.keys(teams_data).map(x => teams_data[x].picks.filter(x => x.is_captain)[0].element));	
+	}
+
+	let ownership_agg = {}
+	if ("picks" in teams_data[Object.keys(teams_data)[0]]) {
+		ownership_agg = array_histogram(Object.values(picks).map(y => y.map(z => z.element)).flat())
+	}
+
+
+
+	league_data.standings = update_live_points(league_data.standings, picks, live);
+
 	
 	var app = Vue.createApp({
 		data() { 
@@ -125,8 +149,10 @@ async function generate_page(){
 				team_details: {},
 				static_data: {},
 				captains_agg: {},
+				ownership_agg: {},
 				lineup: {},
 				schedule: [],
+				picks: {},
 				selected_id: 1, 
 				runs: 0 
 			} 
@@ -138,15 +164,19 @@ async function generate_page(){
 			this.team_details = teams_data;
 			this.static_data = static_data;
 			this.captains_agg = captains_agg;
+			this.ownership_agg = ownership_agg;
 			this.schedule = schedule_data;
 			this.selected_id = league_data.standings[0].entry;
 			this.lineup = picks[league_data.standings[0].entry];
+			this.picks = picks;
 			this.live = live;
 
 			setInterval(async () => {
 				this.schedule = await schedule(gameweek);
 				this.live = await live_data(gameweek);
-			}, 20000)
+				this.standings = update_live_points(this.standings, this.picks, live);
+				$('#standings').DataTable().order( [[ 3, 'desc' ]] ).draw( false );
+			}, 60000)
 		},
 		methods: { 
 			select_row: function (id) {
@@ -159,7 +189,7 @@ async function generate_page(){
 	await app.mount('#vue_app');
 	
 	// Create DataTables
-	var standings_table = $('#standings').DataTable({
+	$('#standings').DataTable({
 		'pageLength': 15,
 		'dom': 'tp',
 		'order': [[ 3, "desc" ]],
@@ -168,6 +198,14 @@ async function generate_page(){
 		]
 	});
 	$('#captains').DataTable({
+		'pageLength': 5,
+		'dom': 'tp',
+		'order': [[ 1, "desc" ]],
+		"columnDefs": [
+    		{ "width": "50%", "targets": 0 }
+  		]	
+	});
+	$('#ownership').DataTable({
 		'pageLength': 5,
 		'dom': 'tp',
 		'order': [[ 1, "desc" ]],
@@ -191,9 +229,6 @@ async function generate_page(){
 	});
 
 
-    return app;
-
-
 };
 
-var app = generate_page();
+generate_page();
