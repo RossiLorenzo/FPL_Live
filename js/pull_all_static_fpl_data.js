@@ -142,12 +142,10 @@ async function generate_page(){
 			this.selected_id = league_data.standings[0].entry;
 			this.lineup = picks[league_data.standings[0].entry];
 			this.live = live;
-			console.log(this.live);
 
 			setInterval(async () => {
 				this.schedule = await schedule(gameweek);
 				this.live = await live_data(gameweek);
-				console.log(this.live);
 			}, 20000)
 		},
 		methods: { 
