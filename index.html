@@ -66,12 +66,11 @@
          <div style="flex: 4%;"><img src="img/fb_logo.png" style="height: 60px; width: 60px;"></div>
       </div>
 
-      <div v-if="loaded">
-         
+      <div v-if="to_load">
+         <img src="img/loading.gif">
       </div>
-      <!-- Table of results -->
       <div v-else style="display: flex;">
-         <div class="main_container" style="flex: 45%;">
+         <div class="main_container" style="flex: 47%;">
             <div class="main_title" style="height: 32px"> <h2>Standings</h2> </div>
             <table id="standings" style="width: 100%;">
                <thead style="font-size: 1.2em;">
@@ -83,10 +82,10 @@
                   <th>Played</th>
                </thead>
                <tbody>
-                  <tr v-for="(team, index) in standings" v-on:click="select_row(team.entry)" :class="{ active_row : selected_id == team.entry || (runs == 0 && index == 0) }">
+                  <tr v-for="(team, index) in standings" :key="index" v-on:click="select_row(team.entry)" :class="{ active_row : selected_id == team.entry || (runs == 0 && index == 0) }">
                      <td>
-                        {{index+1}} ({{team.last_rank}})  
-                        <span v-if="(index+1) < team.last_rank" style="color: green">
+                        {{index+1}} ({{((team.last_rank == 0) ? 'NEW' : team.last_rank)}})  
+                        <span v-if="(index+1) < team.last_rank || team.last_rank == 0" style="color: green">
                            <i class="fas fa-arrow-alt-circle-up"></i>
                         </span>
                         <span v-else-if="(index+1) == team.last_rank">
@@ -97,7 +96,7 @@
                         </span>
                      </td>
                      <td>
-                        <a :href="'https://fantasy.premierleague.com/entry/' + team.entry + '/event/1'" target="_blank"><b>{{team.entry_name}}</b></a>
+                        <a :href="'https://fantasy.premierleague.com/entry/' + team.entry + '/event/' + gameweek" target="_blank"><b>{{team.entry_name}}</b></a>
                         <br>
                         <i>{{team.player_name}}</i>
                      </td>
@@ -109,7 +108,7 @@
                </tbody>
             </table>
          </div>
-         <div class="main_container" style="flex: 25%;">
+         <div class="main_container" style="flex: 23%;">
             <div class="main_title" style="height: 32px">
                <h2>Captain Picks</h2>
             </div>

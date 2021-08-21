@@ -109,42 +109,11 @@ async function team_details(team_ids, gameweek){
 }
 
 async function generate_page(){
-	let static_data = await static_details();
-	let gameweek = static_data.gameweeks.filter(x => x.is_current)[0].id;
-	gameweek = ((url_parameters.match('gameweek=([0-9]{1,2})') == null) ? gameweek : url_parameters.match('gameweek=([0-9]*)')[1]);
-	let league_data = await league_details(league_id);
-	let teams_data = await team_details(league_data.standings, gameweek);
-	let schedule_data = await schedule(gameweek);
-	let live = await live_data(gameweek);
-
-	let picks = {}
-	if ("picks" in teams_data[Object.keys(teams_data)[0]]) {
-		for (const [key, value] of Object.entries(teams_data)) {
-			picks[key] = value.picks;
-		}
-	}
-	
-
-	let captains_agg = {}
-	if (!("detail" in teams_data[Object.keys(teams_data)[0]])) {
-		captains_agg = array_histogram(Object.keys(teams_data).map(x => teams_data[x].picks.filter(x => x.is_captain)[0].element));	
-	}
-
-	let ownership_agg = {}
-	if ("picks" in teams_data[Object.keys(teams_data)[0]]) {
-		ownership_agg = array_histogram(Object.values(picks).map(y => y.map(z => z.element)).flat())
-	}
-
-
-
-	league_data.standings = update_live_points(league_data.standings, picks, live);
-
-	
 	var app = Vue.createApp({
 		data() { 
 			return { 
 				to_load: true,
-				title: 'League Not Found', 
+				title: 'Loading', 
 				standings: null, 
 				team_details: {},
 				static_data: {},
@@ -153,12 +122,42 @@ async function generate_page(){
 				lineup: {},
 				schedule: [],
 				picks: {},
+				gameweek: 1,
 				selected_id: 1, 
 				runs: 0 
 			} 
 		},
-		async mounted() { 
+		async created() { 
+
+			let static_data = await static_details();
+			let gameweek = static_data.gameweeks.filter(x => x.is_current)[0].id;
+			gameweek = ((url_parameters.match('gameweek=([0-9]{1,2})') == null) ? gameweek : url_parameters.match('gameweek=([0-9]*)')[1]);
+			let league_data = await league_details(league_id);
+			let teams_data = await team_details(league_data.standings, gameweek);
+			let schedule_data = await schedule(gameweek);
+			let live = await live_data(gameweek);
+
+			let picks = {}
+			if ("picks" in teams_data[Object.keys(teams_data)[0]]) {
+				for (const [key, value] of Object.entries(teams_data)) {
+					picks[key] = value.picks;
+				}
+			}
+
+			let captains_agg = {}
+			if (!("detail" in teams_data[Object.keys(teams_data)[0]])) {
+				captains_agg = array_histogram(Object.keys(teams_data).map(x => teams_data[x].picks.filter(x => x.is_captain)[0].element));	
+			}
+
+			let ownership_agg = {}
+			if ("picks" in teams_data[Object.keys(teams_data)[0]]) {
+				ownership_agg = array_histogram(Object.values(picks).map(y => y.map(z => z.element)).flat())
+			}
+
+			league_data.standings = update_live_points(league_data.standings, picks, live);
+
 			this.to_load = false;
+			this.gameweek = gameweek;
 			this.title = league_data.league.name;
 			this.standings = league_data.standings;
 			this.team_details = teams_data;
@@ -174,7 +173,9 @@ async function generate_page(){
 			setInterval(async () => {
 				this.schedule = await schedule(gameweek);
 				this.live = await live_data(gameweek);
-				this.standings = update_live_points(this.standings, this.picks, live);
+				let updated_standings = update_live_points(this.standings, this.picks, live);
+				this.standings = updated_standings;
+				this.$forceUpdate();
 				$('#standings').DataTable().order( [[ 3, 'desc' ]] ).draw( false );
 			}, 60000)
 		},
