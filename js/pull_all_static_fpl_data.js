@@ -24,19 +24,6 @@ function array_histogram (array) {
   	}
 	return c;
 }
-function highlight_DT (el, DT_id){
-	//$('#standings tbody').on( 'click', 'tr', function () {
-	if ( el.hasClass('selected') ) { 
-		el.removeClass('selected');
-	}
-	else {
-		$('#' + DT_id + ' tbody tr.selected').removeClass('selected');
-		el.addClass('selected');
-	}
-	return el.attr('id');
-}
-
-//$('#standings tbody').on( 'click', 'tr', function() { highlight_DT($(this) ,'standings') } );
 
 // Pull Static Data
 async function static_details(){
@@ -64,6 +51,12 @@ async function static_details(){
 async function schedule(gameweek){
 	let data = await async_cors_fetch(`https://fantasy.premierleague.com/api/fixtures/?event=${gameweek}`);
 	return data;
+}
+
+// Pull Live Data
+async function live_data(gameweek){
+	let data = await async_cors_fetch(`https://fantasy.premierleague.com/api/event/${gameweek}/live/`);
+	return data.elements;
 }
 
 // Pull League Data 
@@ -109,6 +102,7 @@ async function generate_page(){
 	let league_data = await league_details(league_id);
 	let teams_data = await team_details(league_data.standings, gameweek);
 	let schedule_data = await schedule(gameweek);
+	let live = await live_data(gameweek);
 
 	let captains_agg = {}
 	if (!("detail" in teams_data[Object.keys(teams_data)[0]])) {
@@ -147,6 +141,14 @@ async function generate_page(){
 			this.schedule = schedule_data;
 			this.selected_id = league_data.standings[0].entry;
 			this.lineup = picks[league_data.standings[0].entry];
+			this.live = live;
+			console.log(this.live);
+
+			setInterval(async () => {
+				this.schedule = await schedule(gameweek);
+				this.live = await live_data(gameweek);
+				console.log(this.live);
+			}, 20000)
 		},
 		methods: { 
 			select_row: function (id) {
@@ -161,7 +163,11 @@ async function generate_page(){
 	// Create DataTables
 	var standings_table = $('#standings').DataTable({
 		'pageLength': 15,
-		'dom': 'tp'
+		'dom': 'tp',
+		'order': [[ 3, "desc" ]],
+		"columnDefs": [ 
+			{ "orderable": false, "targets": [0] }
+		]
 	});
 	$('#captains').DataTable({
 		'pageLength': 5,
@@ -177,7 +183,13 @@ async function generate_page(){
 		"bSort" : false,
 		"columnDefs": [
     		{ "width": "50%", "targets": 0 }
-  		]	
+  		],
+		"language": {
+			"paginate": {
+				"previous": "Starting 11",
+				"next": "Bench"
+			}
+  		}
 	});
 
 
