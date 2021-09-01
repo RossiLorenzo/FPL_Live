@@ -18,6 +18,10 @@
       <script type="text/javascript" src="DataTables/datatables.min.js"></script>
       <!-- CSS -->
       <link rel="stylesheet" type="text/css" href="css/index.css"/>
+      <!-- Utilities and Cleaners -->
+      <script src="js/utilities.js"></script>
+      <script src="js/data_cleaners.js"></script>
+      <script src="js/call_FPL_APIs.js"></script>
    </head>
    <style type="text/css">
 
@@ -30,7 +34,6 @@
          <div style="flex: 92%; margin-left: 8pt;"><h3 style="color: white; font-size: 2em; margin: 0.3em;">{{title}}</h3></div>
          <div style="flex: 4%;"><img src="img/fb_logo.png" style="height: 60px; width: 60px;"></div>
       </div>
-
       <div v-if="to_load">
          <div class="loadingio-spinner-eclipse-fqk8jqitbsb"><div class="ldio-4szc161dk5">
             <div></div>
@@ -43,7 +46,7 @@
                <thead style="font-size: 1.2em;">
                   <th>Rank</th>
                   <th>Team</th>
-                  <th>GW</th>
+                  <th>GW{{gameweek.id}}</th>
                   <th>Pts</th>
                   <th>Captain</th>
                   <th>Played</th>
@@ -74,7 +77,7 @@
                   </tr>
                </tbody>
             </table>
-         </div>
+         </div> 
          <div class="main_container" style="flex: 23%;">
             <div class="main_title" style="height: 32px">
                <h2>Captain Picks</h2>
@@ -148,7 +151,7 @@
                         </div>
                      </td>
                      <td>
-                        <img style=" height: 24px; margin-right: 8px; margin-left: 8px; vertical-align:middle;" :src="'https://resources.premierleague.com/premierleague/badges/70/t' + static_data.teams[schedule.map(x => [x.team_h, x.team_a]).filter(x => x[0] == static_data.players[p.element].team || x[1] == static_data.players[p.element].team)[0].join('|').replace(static_data.players[p.element].team, '').replace('|', '')].code + '.png'">
+                        <img style=" height: 24px; margin-right: 8px; margin-left: 8px; vertical-align:middle;" :src="'https://resources.premierleague.com/premierleague/badges/70/t' + static_data.teams[schedule.filter(x => x.team_h == static_data.players[p.element].team).concat(schedule.filter(x => x.team_a == static_data.players[p.element].team)).map(x => [x.team_a, x.team_h].remove(static_data.players[p.element].team)[0])[0]].code + '.png'">
                         </img>
                         <span v-if="static_data.players[p.element].team in schedule.map(x => x.team_h)"><b>H</b></span>
                         <span v-else="static_data.players[p.element].team in schedule.map(x => x.team_a)"><b>a</b></span>
@@ -162,13 +165,13 @@
                <h2>Fixtures</h2>
             </div>
             <div style="background: white;">
-               <div v-for="s in schedule" style="width: 100%; text-align: left; padding: 8px;">
+               <div v-for="s in schedule" style="width: 100%; text-align: left; padding: 8px;"> 
                   <span style="margin-left: 16px;"><b>{{s.team_h_score}}</b></span>
                   <img style=" height: 24px; margin-right: 8px; margin-left: 8px; vertical-align:middle;" :src="'https://resources.premierleague.com/premierleague/badges/70/t' + static_data.teams[s.team_h].code + '.png'">
                   </img>
                   <span>-</span>
                   <img style=" height: 24px; margin-right: 8px; margin-left: 8px;vertical-align:middle;" :src="'https://resources.premierleague.com/premierleague/badges/70/t' + static_data.teams[s.team_a].code + '.png'">
-                  </img>
+                  </img> 
                   <span><b>{{s.team_a_score}}</b></span>
                   <span v-if="s.finished" style="margin-left: 16px;"><i>Finished</i></span>
                   <span v-else-if="s.started" style="margin-left: 16px;"><i>Live</i></span>
