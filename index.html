@@ -72,7 +72,7 @@
                      </td>
                      <td>{{team.live_points}}</td>
                      <td>{{team.total-team.event_total+team.live_points}}</td>
-                     <td>{{static_data.players[picks[team.entry].filter(x => x.is_captain)[0].element].name}}</td>
+                     <td>{{exp_players[picks[team.entry].filter(x => x.is_captain)[0].element].name}}</td>
                      <td>{{picks[team.entry].filter(x => x.position <= 11).map(x => live.filter(y => y.id == x.element).map(y => y.stats.minutes)).flat().filter(x => x > 0).length}}</td>
                   </tr>
                </tbody>
@@ -93,9 +93,9 @@
                      <td>
                         <div>
                            <img style=" height: 32px; margin-right: 8px; vertical-align:middle;" 
-                              :src="'https://resources.premierleague.com/premierleague/photos/players/110x140/p' + static_data.players[id].code + '.png'">
+                              :src="'https://resources.premierleague.com/premierleague/photos/players/110x140/p' + exp_players[id].code + '.png'">
                            </img>
-                           <span>{{static_data.players[id].name}}</span>
+                           <span>{{exp_players[id].name}}</span>
                         </div>
                      </td>
                      <td :data-order="freq">{{freq}} ({{Math.round(100*freq/standings.length)}}%)</td>
@@ -117,9 +117,9 @@
                      <td>
                         <div>
                            <img style=" height: 32px; margin-right: 8px; vertical-align:middle;" 
-                              :src="'https://resources.premierleague.com/premierleague/photos/players/110x140/p' + static_data.players[id].code + '.png'">
+                              :src="'https://resources.premierleague.com/premierleague/photos/players/110x140/p' + exp_players[id].code + '.png'">
                            </img>
-                           <span>{{static_data.players[id].name}}</span>
+                           <span>{{exp_players[id].name}}</span>
                         </div>
                      </td>
                      <td :data-order="freq">{{freq}} ({{Math.round(100*freq/standings.length)}}%)</td>
@@ -144,17 +144,17 @@
                      <td data-order="index">
                         <div>
                            <img style=" height: 32px; margin-right: 8px; vertical-align:middle;" 
-                              :src="'https://resources.premierleague.com/premierleague/photos/players/110x140/p' + static_data.players[p.element].code + '.png'">
+                              :src="'https://resources.premierleague.com/premierleague/photos/players/110x140/p' + exp_players[p.element].code + '.png'">
                            </img>
-                           <span v-if="p.is_captain"><b>{{static_data.players[p.element].name}} (C)</b></span>
-                           <span v-else>{{static_data.players[p.element].name}}</span>
+                           <span v-if="p.is_captain"><b>{{exp_players[p.element].name}} (C)</b></span>
+                           <span v-else>{{exp_players[p.element].name}}</span>
                         </div>
                      </td>
                      <td>
-                        <img style=" height: 24px; margin-right: 8px; margin-left: 8px; vertical-align:middle;" :src="'https://resources.premierleague.com/premierleague/badges/70/t' + static_data.teams[schedule.filter(x => x.team_h == static_data.players[p.element].team).concat(schedule.filter(x => x.team_a == static_data.players[p.element].team)).map(x => [x.team_a, x.team_h].remove(static_data.players[p.element].team)[0])[0]].code + '.png'">
+                        <img style=" height: 24px; margin-right: 8px; margin-left: 8px; vertical-align:middle;" :src="exp_players[p.element].opp_team_link">
                         </img>
-                        <span v-if="static_data.players[p.element].team in schedule.map(x => x.team_h)"><b>H</b></span>
-                        <span v-else="static_data.players[p.element].team in schedule.map(x => x.team_a)"><b>a</b></span>
+                        <span v-if="exp_players[p.element].team in schedule.map(x => x.team_h)"><b>H</b></span>
+                        <span v-else="exp_players[p.element].team in schedule.map(x => x.team_a)"><b>a</b></span>
                      </td>
                      <td>{{live.filter(y => y.id == p.element)[0].stats.minutes}}</td>
                      <td>{{live.filter(y => y.id == p.element)[0].stats.total_points * p.multiplier}}</td>

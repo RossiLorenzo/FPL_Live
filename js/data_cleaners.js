@@ -76,4 +76,25 @@ function create_ownership(data){
 	return array_histogram(Object.values(data).map(y => y.map(z => z.element)).flat());
 }
 
+// Add opponents 
+function add_opponents(data, schedule){
+	var all_players = data.players;
+	var all_players_keys = Object.keys(all_players)
+	for (var i = all_players_keys.length - 1; i > 0; i--) {
+		var pl_team = all_players[i].team;
+		var find_opponent = data.teams[
+			schedule.filter(x => x.team_h == pl_team)
+			.concat(schedule.filter(x => x.team_a == pl_team))
+			.map(x => [x.team_a, x.team_h].remove(pl_team)[0])[0]
+		];
+		all_players[i].opp_team = '';
+		all_players[i].opp_team_link = 'img/no-entry.png';
+		if (find_opponent != undefined) {
+			all_players[i].opp_team = find_opponent.code;
+			all_players[i].opp_team_link = 'https://resources.premierleague.com/premierleague/badges/70/t' + find_opponent.code + '.png'
+		}
+		
+	}
+	return all_players;
+}
 

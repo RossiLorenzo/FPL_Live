@@ -49,6 +49,9 @@ var app = Vue.createApp({
 		this.schedule = all_data.schedule;
 		this.live = all_data.live_data;
 
+		// Clean Players
+		this.exp_players = add_opponents(all_data.static, all_data.schedule);
+		
 		// Update the standings with the most recent scores
 		this.standings = update_live_points(all_data.league_details.standings, this.picks, this.live, this.gameweek);
 		
