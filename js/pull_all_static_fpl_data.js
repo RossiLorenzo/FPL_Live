@@ -84,10 +84,11 @@ var app = Vue.createApp({
 				$('#standings').DataTable(
 					{
 						'pageLength': 15,
-						'dom': 'tp',
+						'dom': 'tpf',
 						'order': [[ 3, "desc" ]],
 						"columnDefs": [ 
-							{ "orderable": false, "targets": [0] }
+							{ "orderable": false, "targets": [0] },
+							{ "searchable": true, "targets": [1] }
 						]
 					}
 				);
