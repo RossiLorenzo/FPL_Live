@@ -1,6 +1,6 @@
 // Global Variables
 var url_parameters = window.location.search;
-var league_id = ((url_parameters.match('league=([0-9]*)') == null) ? '504155' : url_parameters.match('league=([0-9]*)')[1]);
+var league_id = ((url_parameters.match('league=([0-9]*)') == null) ? '686236' : url_parameters.match('league=([0-9]*)')[1]);
 
 function DT_initialize(id, params, else_fun) { 
 	if ( ! $.fn.DataTable.isDataTable(id) ) {
